@@ -5,6 +5,7 @@ import frc.robot.subsystems.Swerve;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 
 public class TeleopSwerve extends CommandBase {
@@ -19,11 +20,17 @@ public class TeleopSwerve extends CommandBase {
     private int translationAxis;
     private int strafeAxis;
     private int rotationAxis;
+    private int throttle;
+
+    //private SlewRateLimiter xLimiter = new SlewRateLimiter(3);
+	//private SlewRateLimiter yLimiter = new SlewRateLimiter(3);
+	private SlewRateLimiter rotationLimiter = new SlewRateLimiter(1); 
+    private SlewRateLimiter throttleLimiter = new SlewRateLimiter(2); 
 
     /**
      * Driver control
      */
-    public TeleopSwerve(Swerve s_Swerve, Joystick controller, int translationAxis, int strafeAxis, int rotationAxis, boolean fieldRelative, boolean openLoop) {
+    public TeleopSwerve(Swerve s_Swerve, Joystick controller, int translationAxis, int strafeAxis, int rotationAxis, boolean fieldRelative, boolean openLoop, int throttle) {
         this.s_Swerve = s_Swerve;
         addRequirements(s_Swerve);
 
@@ -33,6 +40,7 @@ public class TeleopSwerve extends CommandBase {
         this.rotationAxis = rotationAxis;
         this.fieldRelative = fieldRelative;
         this.openLoop = openLoop;
+        this.throttle = throttle;
     }
 
     @Override
@@ -40,14 +48,16 @@ public class TeleopSwerve extends CommandBase {
         double yAxis = -controller.getRawAxis(translationAxis);
         double xAxis = -controller.getRawAxis(strafeAxis);
         double rAxis = -controller.getRawAxis(rotationAxis);
+        double throttleAxis = controller.getRawAxis(throttle);
         
         /* Deadbands */
         yAxis = (Math.abs(yAxis) < Constants.stickDeadband) ? 0 : yAxis;
         xAxis = (Math.abs(xAxis) < Constants.stickDeadband) ? 0 : xAxis;
         rAxis = (Math.abs(rAxis) < Constants.stickDeadband) ? 0 : rAxis;
+        throttleAxis = (Math.abs(throttleAxis) < Constants.stickDeadband) ? 0 : throttleAxis;
 
-        translation = new Translation2d(yAxis, xAxis).times(Constants.Swerve.maxSpeed);
-        rotation = rAxis * Constants.Swerve.maxAngularVelocity;
+        translation = new Translation2d(yAxis, xAxis).times(throttleLimiter.calculate(throttleAxis) * (Constants.Swerve.maxSpeed));
+        rotation = rotationLimiter.calculate(rAxis) * Constants.Swerve.maxAngularVelocity;
         s_Swerve.drive(translation, rotation, fieldRelative, openLoop);
     }
 }
