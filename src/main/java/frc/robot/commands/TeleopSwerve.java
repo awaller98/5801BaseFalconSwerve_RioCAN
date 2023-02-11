@@ -24,7 +24,7 @@ public class TeleopSwerve extends CommandBase {
 
     //private SlewRateLimiter xLimiter = new SlewRateLimiter(3);
 	//private SlewRateLimiter yLimiter = new SlewRateLimiter(3);
-	private SlewRateLimiter rotationLimiter = new SlewRateLimiter(2); 
+	private SlewRateLimiter rotationLimiter = new SlewRateLimiter(1); 
     private SlewRateLimiter throttleLimiter = new SlewRateLimiter(2); 
 
     /**
